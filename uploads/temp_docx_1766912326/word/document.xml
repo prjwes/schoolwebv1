@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" 
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+            xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+            xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+<w:body><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="114300" distR="114300">
+                <wp:extent cx="914400" cy="914400"/>
+                <a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+                <pic:pic><pic:nvPicPr><pic:cNvPr id="1" name="Logo"/><pic:cNvPicPr/></pic:nvPicPr>
+                <pic:blipFill><a:blip r:embed="rId2"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>
+                <pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm>
+                <a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic>
+                </wp:inline></w:drawing></w:r></w:p><w:p><w:pPr><w:jc w:val="center"/><w:spacing w:line="240" w:lineRule="auto"/></w:pPr>
+        <w:r><w:rPr><w:b/><w:sz w:val="32"/></w:rPr><w:t>EBUSHIBO J.S PORTAL</w:t></w:r></w:p><w:p><w:pPr><w:jc w:val="center"/></w:pPr>
+        <w:r><w:rPr><w:b/><w:sz w:val="28"/></w:rPr><w:t>STUDENT REPORT CARD</w:t></w:r></w:p><w:tbl>
+        <w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblBorders><w:top w:val="single" w:sz="12" w:space="0" w:color="000000"/><w:left w:val="single" w:sz="12" w:space="0" w:color="000000"/><w:bottom w:val="single" w:sz="12" w:space="0" w:color="000000"/><w:right w:val="single" w:sz="12" w:space="0" w:color="000000"/><w:insideH w:val="single" w:sz="12" w:space="0" w:color="000000"/><w:insideV w:val="single" w:sz="12" w:space="0" w:color="000000"/></w:tblBorders></w:tblPr><w:tr>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Student Name:</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:t>wess M</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Admission No:</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:t>001</w:t></w:r></w:p></w:tc>
+        </w:tr><w:tr>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Grade:</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Grade 7</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Academic Year:</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:t>2025</w:t></w:r></w:p></w:tc>
+        </w:tr><w:tr>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Term:</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>1</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Average:</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="2500" w:type="pct"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>66</w:t></w:r></w:p></w:tc>
+        </w:tr>
+        </w:tbl><w:p><w:pPr><w:spacing w:line="240"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="24"/></w:rPr><w:t>EXAMINATION RESULTS</w:t></w:r></w:p><w:tbl>
+        <w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblBorders><w:top w:val="single" w:sz="12" w:space="0" w:color="000000"/><w:left w:val="single" w:sz="12" w:space="0" w:color="000000"/><w:bottom w:val="single" w:sz="12" w:space="0" w:color="000000"/><w:right w:val="single" w:sz="12" w:space="0" w:color="000000"/><w:insideH w:val="single" w:sz="12" w:space="0" w:color="000000"/><w:insideV w:val="single" w:sz="12" w:space="0" w:color="000000"/></w:tblBorders></w:tblPr>
+        <w:tr>
+        <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/><w:shd w:fill="E0E0E0"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>Subject</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/><w:shd w:fill="E0E0E0"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>exam 1</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/><w:shd w:fill="E0E0E0"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>Rubric</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/><w:shd w:fill="E0E0E0"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>exam 1</w:t></w:r></w:p></w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/><w:shd w:fill="E0E0E0"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>Rubric</w:t></w:r></w:p></w:tc>
+        </w:tr><w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:r><w:t>Agriculture</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>76.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>EE2</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>76.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>EE2</w:t></w:r></w:p></w:tc>
+            </w:tr><w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:r><w:t>CA</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>68.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME1</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>68.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME1</w:t></w:r></w:p></w:tc>
+            </w:tr><w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:r><w:t>CRE</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>85.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>EE2</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>85.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>EE2</w:t></w:r></w:p></w:tc>
+            </w:tr><w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:r><w:t>English</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>50.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME2</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>50.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME2</w:t></w:r></w:p></w:tc>
+            </w:tr><w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:r><w:t>Integrated Science</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>53.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME2</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>53.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME2</w:t></w:r></w:p></w:tc>
+            </w:tr><w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:r><w:t>Kiswahili</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>64.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME1</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>64.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME1</w:t></w:r></w:p></w:tc>
+            </w:tr><w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:r><w:t>Mathematics</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>55.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME2</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>55.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME2</w:t></w:r></w:p></w:tc>
+            </w:tr><w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:r><w:t>Pre-technical Studies</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>75.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>EE2</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>75.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>EE2</w:t></w:r></w:p></w:tc>
+            </w:tr><w:tr>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:r><w:t>Social Studies</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>68.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME1</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>68.00</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1000" w:type="pct"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>ME1</w:t></w:r></w:p></w:tc>
+            </w:tr></w:tbl><w:p><w:pPr><w:spacing w:line="240" w:before="240"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="24"/></w:rPr><w:t>COMPETENCY LEVELS</w:t></w:r></w:p><w:p><w:r><w:t>BE (Below Expectation): 0-10 | AE (Approaching Expectation): 11-40 | ME (Meeting Expectation): 41-74 | EE (Exceeding Expectation): 75-100</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line="240" w:before="240"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="24"/></w:rPr><w:t>FACILITATOR REMARKS</w:t></w:r></w:p><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Core Competencies:</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line="360"/></w:pPr><w:r><w:t>_________________________________________________________________</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line="360"/></w:pPr><w:r><w:t>_________________________________________________________________</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line="240" w:before="120"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>Achievements:</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line="360"/></w:pPr><w:r><w:t>_________________________________________________________________</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line="360"/></w:pPr><w:r><w:t>_________________________________________________________________</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line="240" w:before="120"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>Areas for Development:</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line="360"/></w:pPr><w:r><w:t>_________________________________________________________________</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:line="360"/></w:pPr><w:r><w:t>_________________________________________________________________</w:t></w:r></w:p><w:p><w:pPr><w:spacing w:before="360"/></w:pPr></w:p><w:tbl>
+        <w:tblPr><w:tblW w:w="5000" w:type="pct"/></w:tblPr>
+        <w:tr>
+        <w:tc><w:tcPr><w:tcW w:w="1667" w:type="pct"/></w:tcPr>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>_________________</w:t></w:r></w:p>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>Facilitator</w:t></w:r></w:p>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>Date: __________</w:t></w:r></w:p>
+        </w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="1667" w:type="pct"/></w:tcPr>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>_________________</w:t></w:r></w:p>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>Head Teacher</w:t></w:r></w:p>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>Date: __________</w:t></w:r></w:p>
+        </w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="1667" w:type="pct"/></w:tcPr>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>_________________</w:t></w:r></w:p>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>Parent/Guardian</w:t></w:r></w:p>
+            <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>Date: __________</w:t></w:r></w:p>
+        </w:tc>
+        </w:tr>
+        </w:tbl><w:p><w:pPr><w:spacing w:before="360"/><w:jc w:val="center"/></w:pPr>
+        <w:r><w:rPr><w:b/><w:sz w:val="18"/></w:rPr><w:t>Term Dates - Started: 2025-12-01 | Ended: 2025-12-31 | Next Term: 2026-01-05</w:t></w:r></w:p></w:body></w:document>

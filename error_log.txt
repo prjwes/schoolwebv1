@@ -1,0 +1,11 @@
+[13-Jan-2026 04:55:04 America/New_York] Database connection exception: Too many connections
+[13-Jan-2026 06:39:24 America/New_York] Database connection exception: Connection timed out
+[13-Jan-2026 06:42:30 America/New_York] Database connection exception: Connection timed out
+[13-Jan-2026 06:42:46 America/New_York] Database connection exception: Connection timed out
+[13-Jan-2026 06:55:23 America/New_York] Database connection exception: Connection timed out
+[13-Jan-2026 06:55:32 America/New_York] Database connection exception: Connection timed out
+[21-Jan-2026 07:00:31 America/New_York] Database connection exception: Connection refused
+[21-Jan-2026 07:00:36 America/New_York] Database connection exception: Connection refused
+[21-Jan-2026 07:00:44 America/New_York] Database connection exception: Connection refused
+[21-Jan-2026 07:00:53 America/New_York] Database connection exception: Connection refused
+[21-Jan-2026 07:01:05 America/New_York] Database connection exception: Connection refused
