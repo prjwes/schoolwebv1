@@ -98,9 +98,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_fee_type']) && in
     $stmt = $conn->prepare("INSERT INTO fee_types (fee_name, amount, grade) VALUES (?, ?, ?)");
     $stmt->bind_param("sds", $fee_name, $fee_amount, $fee_grade);
     $stmt->execute();
+    $fee_type_id = $stmt->insert_id;
     $stmt->close();
     
-    header('Location: fees.php?success=1');
+    // Automatically assign fee to students
+    if ($fee_grade === 'all') {
+        // Assign to all active students
+        $stmt = $conn->prepare("SELECT id FROM students WHERE status = 'Active'");
+        $stmt->execute();
+        $students_to_assign = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+    } else {
+        // Assign to specific grade
+        $stmt = $conn->prepare("SELECT id FROM students WHERE grade = ? AND status = 'Active'");
+        $stmt->bind_param("s", $fee_grade);
+        $stmt->execute();
+        $students_to_assign = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+    }
+    
+    // Assign fee to each student with amount_paid = 0
+    $assigned = 0;
+    foreach ($students_to_assign as $student) {
+        // Check if already assigned
+        $check = $conn->prepare("SELECT id FROM student_fees WHERE student_id = ? AND fee_type_id = ?");
+        $check->bind_param("ii", $student['id'], $fee_type_id);
+        $check->execute();
+        $existing = $check->get_result();
+        $check->close();
+        
+        if ($existing->num_rows > 0) {
+            continue; // Skip if already assigned
+        }
+        
+        // Create student fee record with amount_due = fee_amount, amount_paid = 0
+        $insert = $conn->prepare("INSERT INTO student_fees (student_id, fee_type_id, amount_due, amount_paid, status, due_date) VALUES (?, ?, ?, 0.00, 'pending', ?)");
+        if ($insert) {
+            $due_date = date('Y-m-d', strtotime('+30 days'));
+            $insert->bind_param("iids", $student['id'], $fee_type_id, $fee_amount, $due_date);
+            if ($insert->execute()) {
+                $assigned++;
+            }
+            $insert->close();
+        }
+    }
+    
+    header('Location: fees.php?success=1&assigned=' . $assigned);
     exit();
 }
 
@@ -280,6 +323,8 @@ if ($role === 'Student') {
     // Get all payments with filters
     $grade_filter = isset($_GET['grade']) ? sanitize($_GET['grade']) : null;
     $term_filter = isset($_GET['term']) ? sanitize($_GET['term']) : null;
+    $fee_type_filter = isset($_GET['fee_type']) ? intval($_GET['fee_type']) : null;
+    $fee_name_filter = isset($_GET['fee_name']) ? sanitize($_GET['fee_name']) : null;
     
     $sql = "SELECT fp.*, ft.fee_name, s.student_id, s.grade, u.full_name as student_name FROM fee_payments fp JOIN fee_types ft ON fp.fee_type_id = ft.id JOIN students s ON fp.student_id = s.id JOIN users u ON s.user_id = u.id WHERE 1=1";
     
@@ -289,6 +334,14 @@ if ($role === 'Student') {
     
     if ($term_filter) {
         $sql .= " AND fp.term = '" . $conn->real_escape_string($term_filter) . "'";
+    }
+    
+    if ($fee_type_filter) {
+        $sql .= " AND fp.fee_type_id = " . $fee_type_filter;
+    }
+    
+    if ($fee_name_filter) {
+        $sql .= " AND ft.fee_name = '" . $conn->real_escape_string($fee_name_filter) . "'";
     }
     
     $sql .= " ORDER BY fp.payment_date DESC LIMIT 100";
@@ -741,7 +794,29 @@ $fee_types = $conn->query("SELECT * FROM fee_types WHERE is_active = 1")->fetch_
             <div class="table-container">
                 <div class="table-header">
                     <h3>Payment History (<?php echo count($payments); ?>)</h3>
+                    <?php if (in_array($role, ['Admin', 'HOI', 'DHOI', 'Finance_Teacher'])): ?>
+                        <button class="btn btn-sm" onclick="togglePaymentFilters()">Filter by Type</button>
+                    <?php endif; ?>
                 </div>
+
+                <!-- Payment Filter Section -->
+                <?php if (in_array($role, ['Admin', 'HOI', 'DHOI', 'Finance_Teacher'])): ?>
+                <div id="paymentFilters" style="display: none; padding: 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); overflow-x: auto;">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <a href="fees.php" class="btn btn-sm" style="background: var(--primary-color); color: white;">All Payments</a>
+                        <?php 
+                        // Get unique fee types
+                        $unique_fees = $conn->query("SELECT DISTINCT fee_name, id FROM fee_types WHERE is_active = 1 ORDER BY fee_name");
+                        if ($unique_fees) {
+                            while ($fee = $unique_fees->fetch_assoc()) {
+                                echo '<button class="btn btn-sm" onclick="filterPaymentsByFeeType(' . $fee['id'] . ')" style="background: #f0f0f0;">' . htmlspecialchars($fee['fee_name']) . '</button>';
+                            }
+                        }
+                        ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -767,10 +842,10 @@ $fee_types = $conn->query("SELECT * FROM fee_types WHERE is_active = 1")->fetch_
                                 <tr>
                                     <?php if ($role !== 'Student'): ?>
                                         <td><?php echo htmlspecialchars($payment['student_id']); ?></td>
-                                        <td><?php echo htmlspecialchars($payment['student_name']); ?></td>
+                                        <td><a href="student_details.php?id=<?php echo $payment['student_id'] > 0 ? 'student_record_id_here' : ''; ?>" style="color: var(--primary-color); text-decoration: none; cursor: pointer;"><?php echo htmlspecialchars($payment['student_name']); ?></a></td>
                                         <td>Grade <?php echo htmlspecialchars($payment['grade']); ?></td>
                                     <?php endif; ?>
-                                    <td><?php echo htmlspecialchars($payment['fee_name']); ?></td>
+                                    <td><span style="padding: 4px 8px; background: var(--primary-color); color: white; border-radius: 4px; cursor: pointer; font-weight: bold;" onclick="filterPaymentsByFeeName('<?php echo htmlspecialchars($payment['fee_name']); ?>')"><?php echo htmlspecialchars($payment['fee_name']); ?></span></td>
                                     <td>/= <?php echo number_format($payment['amount_paid'], 2); ?></td>
                                     <td><?php echo formatDate($payment['payment_date']); ?></td>
                                     <td><?php echo htmlspecialchars($payment['payment_method']); ?></td>
@@ -818,6 +893,23 @@ $fee_types = $conn->query("SELECT * FROM fee_types WHERE is_active = 1")->fetch_
         function toggleAssignFeeForm() {
             const form = document.getElementById('assignFeeForm');
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function togglePaymentFilters() {
+            const filters = document.getElementById('paymentFilters');
+            if (filters) {
+                filters.style.display = filters.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function filterPaymentsByFeeType(feeTypeId) {
+            // Redirect to fees page filtered by fee type
+            window.location.href = 'fees.php?fee_type=' + feeTypeId;
+        }
+
+        function filterPaymentsByFeeName(feeName) {
+            // Redirect to fees page with fee type filter
+            window.location.href = 'fees.php?fee_name=' + encodeURIComponent(feeName);
         }
 
         // Handle assign grade option toggle

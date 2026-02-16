@@ -14,19 +14,35 @@ $stats = [];
 if ($role === 'Student') {
     $student = getStudentByUserId($user['id']);
     
+    if (!$student) {
+        // Student record not found, redirect to login
+        header('Location: login.php');
+        exit();
+    }
+    
     $stmt = $conn->prepare("SELECT COUNT(*) as count FROM exam_results WHERE student_id = ?");
-    $stmt->bind_param("i", $student['id']);
-    $stmt->execute();
-    $stats['exams'] = $stmt->get_result()->fetch_assoc()['count'];
-    $stmt->close();
+    if ($stmt) {
+        $stmt->bind_param("i", $student['id']);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        $stats['exams'] = $result['count'] ?? 0;
+        $stmt->close();
+    } else {
+        $stats['exams'] = 0;
+    }
     
     $stats['fee_percentage'] = calculateFeePercentage($student['id']);
     
     $stmt = $conn->prepare("SELECT COUNT(*) as count FROM club_members WHERE student_id = ?");
-    $stmt->bind_param("i", $student['id']);
-    $stmt->execute();
-    $stats['clubs'] = $stmt->get_result()->fetch_assoc()['count'];
-    $stmt->close();
+    if ($stmt) {
+        $stmt->bind_param("i", $student['id']);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        $stats['clubs'] = $result['count'] ?? 0;
+        $stmt->close();
+    } else {
+        $stats['clubs'] = 0;
+    }
 } else {
     $stats['total_students'] = $conn->query("SELECT COUNT(*) as count FROM students WHERE status = 'Active'")->fetch_assoc()['count'] ?? 0;
     $stats['total_exams'] = $conn->query("SELECT COUNT(*) as count FROM exams")->fetch_assoc()['count'] ?? 0;

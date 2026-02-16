@@ -391,61 +391,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_excel'])) {
                 </form>
             </div>
 
-            <!-- Exams Table -->
+            <!-- Exams Container View -->
             <div class="table-container">
                 <div class="table-header">
                     <h3>Exams List (<?php echo count($exams); ?>)</h3>
                     <button class="btn btn-sm" onclick="toggleImportForm()">Import from Excel</button>
                 </div>
-                <div class="table-responsive">
-                    <table id="examsTable">
-                        <thead>
-                            <tr>
-                                <th>Exam Name</th>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Grade</th>
-                                <th colspan="9">Subjects & Rubrics</th>
-                                <th>Created By</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($exams as $exam): ?>
-                                <tr>
-                                    <td><strong><?php echo htmlspecialchars($exam['exam_name']); ?></strong></td>
-                                    <td><?php echo formatDate($exam['exam_date']); ?></td>
-                                    <td><?php echo htmlspecialchars($exam['exam_type']); ?></td>
-                                    <td>Grade <?php echo htmlspecialchars($exam['grade']); ?></td>
-                                    <td colspan="9">
-                                        <div style="font-size: 12px;">
-                                            <?php 
-                                            $subjects = $exam_subjects_map[$exam['id']] ?? [];
-                                            foreach ($subjects as $subject) {
-                                                echo '<span style="display: inline-block; margin-right: 8px; padding: 4px 8px; background: #f0f0f0; border-radius: 4px;">' . htmlspecialchars($subject) . '</span>';
-                                            }
-                                            ?>
-                                        </div>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($exam['created_by_name']); ?></td>
-                                    <td>
-                                        <a href="exam_results.php?id=<?php echo $exam['id']; ?>" class="btn btn-sm">View</a>
-                                        <a href="?export_csv=1&exam_id=<?php echo $exam['id']; ?>" class="btn btn-sm">Export CSV</a>
-                                        <a href="?delete_exam=<?php echo $exam['id']; ?>" class="btn btn-sm" style="background-color: #dc3545;" onclick="return confirm('Delete this exam?')">Delete</a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                            
-                            <?php if (empty($exams)): ?>
-                                <tr>
-                                    <td colspan="13" style="text-align: center;">No exams found</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 24px;">
+                    <?php foreach ($exams as $exam): ?>
+                        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; background: var(--bg-secondary); cursor: pointer; transition: all 0.3s;" onclick="openExamDetails(<?php echo htmlspecialchars(json_encode($exam)); ?>, <?php echo htmlspecialchars(json_encode($exam_subjects_map[$exam['id']] ?? [])); ?>)">
+                            <h4 style="margin: 0 0 8px 0; color: var(--primary-color);"><?php echo htmlspecialchars($exam['exam_name']); ?></h4>
+                            <p style="margin: 4px 0; font-size: 14px; color: var(--text-secondary);"><strong>Type:</strong> <?php echo htmlspecialchars($exam['exam_type']); ?></p>
+                            <p style="margin: 4px 0; font-size: 14px; color: var(--text-secondary);"><strong>Grade:</strong> <?php echo htmlspecialchars($exam['grade']); ?></p>
+                            <p style="margin: 4px 0; font-size: 14px; color: var(--text-secondary);"><strong>Date:</strong> <?php echo formatDate($exam['exam_date']); ?></p>
+                            <p style="margin: 4px 0; font-size: 12px; color: var(--text-secondary);"><strong>Created by:</strong> <?php echo htmlspecialchars($exam['created_by_name']); ?></p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 12px;">
+                                <?php 
+                                $subjects = $exam_subjects_map[$exam['id']] ?? [];
+                                foreach (array_slice($subjects, 0, 3) as $subject) {
+                                    echo '<span style="font-size: 11px; padding: 2px 6px; background: var(--primary-color); color: white; border-radius: 3px;">' . htmlspecialchars($subject) . '</span>';
+                                }
+                                if (count($subjects) > 3) {
+                                    echo '<span style="font-size: 11px; padding: 2px 6px; background: var(--primary-color); color: white; border-radius: 3px;">+' . (count($subjects) - 3) . ' more</span>';
+                                }
+                                ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    
+                    <?php if (empty($exams)): ?>
+                        <p style="grid-column: 1 / -1; text-align: center; padding: 40px;">No exams found. Create one to get started.</p>
+                    <?php endif; ?>
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Exam Details Modal -->
+    <div id="examDetailsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 600px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+                <h2 id="modalExamName" style="margin: 0;"></h2>
+                <button onclick="closeExamDetails()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <div>
+                    <p><strong>Exam Type:</strong> <span id="modalExamType"></span></p>
+                    <p><strong>Grade:</strong> <span id="modalExamGrade"></span></p>
+                </div>
+                <div>
+                    <p><strong>Date:</strong> <span id="modalExamDate"></span></p>
+                    <p><strong>Total Marks:</strong> <span id="modalExamTotalMarks"></span></p>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <h4 style="margin-top: 0;">Subjects:</h4>
+                <div id="modalExamSubjects" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+            </div>
+
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <a id="modalViewLink" href="#" class="btn btn-primary" style="text-decoration: none; display: inline-block; padding: 10px 16px; border-radius: 4px;">View Results</a>
+                <a id="modalExportLink" href="#" class="btn btn-secondary" style="text-decoration: none; display: inline-block; padding: 10px 16px; border-radius: 4px;">Export CSV</a>
+                <a id="modalDeleteLink" href="#" class="btn" style="text-decoration: none; display: inline-block; padding: 10px 16px; border-radius: 4px; background-color: #dc3545; color: white;" onclick="return confirm('Delete this exam?')">Delete</a>
+                <button onclick="closeExamDetails()" class="btn btn-secondary" style="padding: 10px 16px;">Close</button>
+            </div>
+        </div>
     </div>
 
     <script src="assets/js/theme.js"></script>
@@ -459,6 +471,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_excel'])) {
         function toggleImportForm() {
             const form = document.getElementById('importForm');
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function openExamDetails(exam, subjects) {
+            document.getElementById('modalExamName').textContent = exam.exam_name;
+            document.getElementById('modalExamType').textContent = exam.exam_type;
+            document.getElementById('modalExamGrade').textContent = 'Grade ' + exam.grade;
+            document.getElementById('modalExamDate').textContent = exam.exam_date;
+            document.getElementById('modalExamTotalMarks').textContent = exam.total_marks;
+            
+            const subjectsDiv = document.getElementById('modalExamSubjects');
+            subjectsDiv.innerHTML = '';
+            subjects.forEach(subject => {
+                const span = document.createElement('span');
+                span.textContent = subject;
+                span.style.cssText = 'display: inline-block; padding: 6px 12px; background: var(--primary-color); color: white; border-radius: 4px; font-size: 14px;';
+                subjectsDiv.appendChild(span);
+            });
+            
+            document.getElementById('modalViewLink').href = 'exam_results.php?id=' + exam.id;
+            document.getElementById('modalExportLink').href = '?export_csv=1&exam_id=' + exam.id;
+            document.getElementById('modalDeleteLink').href = '?delete_exam=' + exam.id;
+            
+            document.getElementById('examDetailsModal').style.display = 'flex';
+        }
+
+        function closeExamDetails() {
+            document.getElementById('examDetailsModal').style.display = 'none';
         }
     </script>
 </body>

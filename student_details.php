@@ -45,6 +45,64 @@ if (!$student) {
     exit();
 }
 
+// Handle photo upload
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_photo'])) {
+    if (isset($_FILES['student_photo']) && $_FILES['student_photo']['error'] === 0) {
+        $file = $_FILES['student_photo'];
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+        
+        if (!in_array($mime_type, $allowed_types)) {
+            $error_msg = "Invalid file type. Please upload a JPEG, PNG, or GIF image.";
+        } elseif ($file['size'] > 5 * 1024 * 1024) {
+            $error_msg = "File size exceeds 5MB limit.";
+        } else {
+            // Create upload directory if it doesn't exist
+            $upload_dir = 'uploads/student_photos/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
+            }
+            
+            // Generate unique filename
+            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $filename = 'student_' . $student_id . '_' . time() . '.' . $extension;
+            $upload_path = $upload_dir . $filename;
+            
+            if (move_uploaded_file($file['tmp_name'], $upload_path)) {
+                // Update profile image in database
+                $relative_path = $filename;
+                $photo_update = "UPDATE users SET profile_image = ? WHERE id = ?";
+                $photo_stmt = $conn->prepare($photo_update);
+                
+                if ($photo_stmt) {
+                    $photo_stmt->bind_param("si", $relative_path, $student['user_id']);
+                    if ($photo_stmt->execute()) {
+                        // Refresh student data
+                        $stmt = $conn->prepare($query);
+                        $stmt->bind_param("i", $student_id);
+                        $stmt->execute();
+                        $student = $stmt->get_result()->fetch_assoc();
+                        $stmt->close();
+                        
+                        $success_msg = "Student photo updated successfully!";
+                    } else {
+                        $error_msg = "Failed to update photo in database.";
+                    }
+                    $photo_stmt->close();
+                } else {
+                    $error_msg = "Database error: " . $conn->error;
+                }
+            } else {
+                $error_msg = "Failed to upload photo. Please try again.";
+            }
+        }
+    } else {
+        $error_msg = "No file selected or upload error occurred.";
+    }
+}
+
 // Handle form submission for editing
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_student'])) {
     $parent_name = sanitize($_POST['parent_name'] ?? '');
@@ -174,6 +232,19 @@ if ($club_check && $club_check->num_rows > 0) {
                 
                 <!-- Edit Form -->
                 <div id="editForm" style="display: none; padding: 24px; border-bottom: 1px solid #ddd; background: var(--bg-secondary);">
+                    <!-- Photo Upload Section -->
+                    <div style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color);">
+                        <h4 style="margin-top: 0;">Update Student Photo</h4>
+                        <form method="POST" enctype="multipart/form-data" style="display: flex; gap: 12px; align-items: flex-end;">
+                            <div class="form-group" style="flex: 1;">
+                                <label for="student_photo">Select Photo (JPG, PNG, GIF - Max 5MB)</label>
+                                <input type="file" id="student_photo" name="student_photo" accept="image/*" required style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 100%;">
+                            </div>
+                            <button type="submit" name="upload_photo" class="btn btn-primary" style="padding: 10px 16px; white-space: nowrap;">Upload Photo</button>
+                        </form>
+                    </div>
+
+                    <!-- Edit Information Form -->
                     <form method="POST" enctype="multipart/form-data">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                             <div class="form-group">
@@ -283,35 +354,95 @@ if ($club_check && $club_check->num_rows > 0) {
             <div class="table-container" style="margin-bottom: 24px;">
                 <div class="table-header">
                     <h3>Exam Results</h3>
+                    <?php if (!empty($exam_results)): ?>
+                        <button class="btn btn-primary" onclick="printExamResults()">Print Results</button>
+                    <?php endif; ?>
+                </div>
+                <div id="examResultsContent">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Exam Name</th>
+                                    <th>Exam Type</th>
+                                    <th>Date</th>
+                                    <th>Marks Obtained</th>
+                                    <th>Total Marks</th>
+                                    <th>Percentage</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($exam_results)): ?>
+                                    <tr>
+                                        <td colspan="7" style="text-align: center; padding: 20px;">No exam results yet</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($exam_results as $result): 
+                                        $percentage = ($result['marks_obtained'] / $result['total_marks']) * 100;
+                                    ?>
+                                        <tr>
+                                            <td><strong><?php echo htmlspecialchars($result['exam_name']); ?></strong></td>
+                                            <td><?php echo htmlspecialchars($result['exam_type']); ?></td>
+                                            <td><?php echo date('M d, Y', strtotime($result['exam_date'])); ?></td>
+                                            <td><?php echo number_format($result['marks_obtained'], 2); ?></td>
+                                            <td><?php echo $result['total_marks']; ?></td>
+                                            <td><strong><?php echo round($percentage, 2) . '%'; ?></strong></td>
+                                            <td><button class="btn btn-sm" onclick="viewExamDetails(<?php echo $result['id']; ?>, '<?php echo htmlspecialchars($result['exam_name']); ?>')">View Details</button></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fees Paid Section -->
+            <div class="table-container" style="margin-bottom: 24px;">
+                <div class="table-header">
+                    <h3>Fees Paid</h3>
                 </div>
                 <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
-                                <th>Exam Name</th>
-                                <th>Exam Type</th>
-                                <th>Date</th>
-                                <th>Marks Obtained</th>
-                                <th>Total Marks</th>
-                                <th>Percentage</th>
+                                <th>Fee Type</th>
+                                <th>Expected Amount</th>
+                                <th>Amount Paid</th>
+                                <th>Balance</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if (empty($exam_results)): ?>
+                            <?php 
+                            $student_fees_query = "SELECT sf.*, ft.fee_name, ft.amount as expected_amount FROM student_fees sf JOIN fee_types ft ON sf.fee_type_id = ft.id WHERE sf.student_id = ? ORDER BY ft.fee_name";
+                            $fees_stmt = $conn->prepare($student_fees_query);
+                            $student_fees = [];
+                            if ($fees_stmt) {
+                                $fees_stmt->bind_param("i", $student_id);
+                                $fees_stmt->execute();
+                                $student_fees = $fees_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                                $fees_stmt->close();
+                            }
+                            
+                            if (empty($student_fees)): 
+                            ?>
                                 <tr>
-                                    <td colspan="6" style="text-align: center; padding: 20px;">No exam results yet</td>
+                                    <td colspan="5" style="text-align: center; padding: 20px;">No fees assigned yet</td>
                                 </tr>
                             <?php else: ?>
-                                <?php foreach ($exam_results as $result): 
-                                    $percentage = ($result['marks_obtained'] / $result['total_marks']) * 100;
+                                <?php foreach ($student_fees as $fee): 
+                                    $balance = $fee['expected_amount'] - $fee['amount_paid'];
+                                    $status_color = $balance <= 0 ? '#d4edda' : ($balance < ($fee['expected_amount'] * 0.25) ? '#fff3cd' : '#f8d7da');
+                                    $status_text = $balance <= 0 ? 'Paid' : 'Pending';
                                 ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($result['exam_name']); ?></td>
-                                        <td><?php echo htmlspecialchars($result['exam_type']); ?></td>
-                                        <td><?php echo date('M d, Y', strtotime($result['exam_date'])); ?></td>
-                                        <td><?php echo number_format($result['marks_obtained'], 2); ?></td>
-                                        <td><?php echo $result['total_marks']; ?></td>
-                                        <td><?php echo round($percentage, 2) . '%'; ?></td>
+                                        <td><?php echo htmlspecialchars($fee['fee_name']); ?></td>
+                                        <td>/= <?php echo number_format($fee['expected_amount'], 2); ?></td>
+                                        <td>/= <?php echo number_format($fee['amount_paid'], 2); ?></td>
+                                        <td>/= <?php echo number_format($balance, 2); ?></td>
+                                        <td><span style="background: <?php echo $status_color; ?>; padding: 4px 8px; border-radius: 4px; font-weight: bold;"><?php echo $status_text; ?></span></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
@@ -359,6 +490,51 @@ if ($club_check && $club_check->num_rows > 0) {
         function toggleEditForm() {
             const form = document.getElementById('editForm');
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function printExamResults() {
+            const printWindow = window.open('', '_blank');
+            const content = document.getElementById('examResultsContent').innerHTML;
+            const studentName = '<?php echo htmlspecialchars($student['full_name']); ?>';
+            
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Exam Results - ${studentName}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { text-align: center; margin-bottom: 10px; }
+                        .info { text-align: center; margin-bottom: 20px; color: #666; font-size: 14px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #000; padding: 10px; text-align: left; }
+                        th { background-color: #f0f0f0; font-weight: bold; }
+                        .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #999; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Exam Results Report</h1>
+                    <div class="info">
+                        <p><strong>Student:</strong> ${studentName}</p>
+                        <p><strong>Date Printed:</strong> ${new Date().toLocaleString()}</p>
+                    </div>
+                    ${content}
+                    <div class="footer">
+                        <p>This is an official school document.</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 250);
+        }
+
+        function viewExamDetails(examId, examName) {
+            // Redirect to exam results page for detailed view
+            window.location.href = 'exam_results.php?id=' + examId;
         }
     </script>
 </body>
