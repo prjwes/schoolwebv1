@@ -14,29 +14,48 @@ $subjects = ['English', 'Kiswahili', 'Mathematics', 'Integrated Science', 'CRE',
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_exam'])) {
     $exam_name = sanitize($_POST['exam_name']);
     $exam_type = sanitize($_POST['exam_type']);
-    $grade = sanitize($_POST['grade']);
+    $exam_scope = sanitize($_POST['exam_scope'] ?? 'specific'); // 'specific', 'primary', 'junior_school', 'whole_school'
+    $grade = sanitize($_POST['grade'] ?? '');
     $exam_date = sanitize($_POST['exam_date']);
     $total_marks = intval($_POST['total_marks']);
     
-    $stmt = $conn->prepare("INSERT INTO exams (exam_name, exam_type, grade, total_marks, exam_date, created_by) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssisi", $exam_name, $exam_type, $grade, $total_marks, $exam_date, $user['id']);
-    $stmt->execute();
-    $exam_id = $stmt->insert_id;
-    $stmt->close();
+    // Determine which grades this exam applies to
+    $grades_to_create = [];
+    if ($exam_scope === 'primary') {
+        $grades_to_create = ['1', '2', '3', '4', '5', '6'];
+    } elseif ($exam_scope === 'junior_school') {
+        $grades_to_create = ['7', '8', '9'];
+    } elseif ($exam_scope === 'whole_school') {
+        $grades_to_create = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    } else {
+        $grades_to_create = [$grade];
+    }
     
-    // Create exam entries for all 9 subjects
-    foreach ($subjects as $subject) {
-        $stmt = $conn->prepare("INSERT INTO exam_subjects (exam_id, subject) VALUES (?, ?)");
-        $stmt->bind_param("is", $exam_id, $subject);
-        $stmt->execute();
+    // Create exams for each applicable grade
+    $created_count = 0;
+    foreach ($grades_to_create as $target_grade) {
+        $stmt = $conn->prepare("INSERT INTO exams (exam_name, exam_type, grade, total_marks, exam_date, created_by) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssisi", $exam_name, $exam_type, $target_grade, $total_marks, $exam_date, $user['id']);
+        if ($stmt->execute()) {
+            $exam_id = $stmt->insert_id;
+            $created_count++;
+            
+            // Create exam entries for all 9 subjects
+            foreach ($subjects as $subject) {
+                $subj_stmt = $conn->prepare("INSERT INTO exam_subjects (exam_id, subject) VALUES (?, ?)");
+                $subj_stmt->bind_param("is", $exam_id, $subject);
+                $subj_stmt->execute();
+                $subj_stmt->close();
+            }
+        }
         $stmt->close();
     }
     
-    header('Location: exams.php?success=1');
+    header('Location: exams.php?success=1&created=' . $created_count);
     exit();
 }
 
-if (isset($_GET['delete_exam'])) {
+if (isset($_GET['delete_exam']) && isset($_GET['confirm']) && $_GET['confirm'] === 'yes') {
     $exam_id = intval($_GET['delete_exam']);
     
     // Delete exam results first (foreign key constraint)
@@ -63,7 +82,7 @@ if (isset($_GET['delete_exam'])) {
         $stmt->close();
     }
     
-    header('Location: exams.php?success=1');
+    header('Location: exams.php?success=1&deleted=1');
     exit();
 }
 
@@ -324,8 +343,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_excel'])) {
                     </div>
                     
                     <div class="form-group">
+                        <label for="exam_scope">Exam Scope *</label>
+                        <select id="exam_scope" name="exam_scope" onchange="updateGradeOptions()" required>
+                            <option value="specific">Specific Grade</option>
+                            <option value="primary">Primary (Grade 1-6)</option>
+                            <option value="junior_school">Junior School (Grade 7-9)</option>
+                            <option value="whole_school">Whole School (Grade 1-9)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="gradeContainer">
                         <label for="grade">Grade *</label>
-                        <select id="grade" name="grade" required>
+                        <select id="grade" name="grade">
                             <option value="">Select Grade</option>
                             <optgroup label="Lower Class Primary (Grade 1-3)">
                                 <option value="1">Grade 1</option>
@@ -454,7 +483,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_excel'])) {
             <div style="display: flex; gap: 8px; justify-content: flex-end;">
                 <a id="modalViewLink" href="#" class="btn btn-primary" style="text-decoration: none; display: inline-block; padding: 10px 16px; border-radius: 4px;">View Results</a>
                 <a id="modalExportLink" href="#" class="btn btn-secondary" style="text-decoration: none; display: inline-block; padding: 10px 16px; border-radius: 4px;">Export CSV</a>
-                <a id="modalDeleteLink" href="#" class="btn" style="text-decoration: none; display: inline-block; padding: 10px 16px; border-radius: 4px; background-color: #dc3545; color: white;" onclick="return confirm('Delete this exam?')">Delete</a>
+                <button class="btn" style="padding: 10px 16px; border-radius: 4px; background-color: #dc3545; color: white; border: none; cursor: pointer;" id="modalDeleteBtn" onclick="deleteExamFromModal()">Delete</button>
                 <button onclick="closeExamDetails()" class="btn btn-secondary" style="padding: 10px 16px;">Close</button>
             </div>
         </div>
@@ -471,6 +500,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_excel'])) {
         function toggleImportForm() {
             const form = document.getElementById('importForm');
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function updateGradeOptions() {
+            const scope = document.getElementById('exam_scope').value;
+            const gradeContainer = document.getElementById('gradeContainer');
+            const gradeSelect = document.getElementById('grade');
+            
+            if (scope === 'specific') {
+                gradeContainer.style.display = 'block';
+                gradeSelect.required = true;
+            } else {
+                gradeContainer.style.display = 'none';
+                gradeSelect.required = false;
+                gradeSelect.value = '';
+            }
+        }
+        
+        function confirmDeleteExam(examId) {
+            if (confirm('Are you sure you want to delete this exam? This will also delete all exam results associated with it. This action cannot be undone.')) {
+                window.location.href = '?delete_exam=' + examId + '&confirm=yes';
+            }
+        }
+        
+        let currentExamIdToDelete = null;
+        
+        function deleteExamFromModal() {
+            if (confirm('Are you absolutely sure you want to delete this exam? This action cannot be undone and will delete all associated exam results.')) {
+                if (currentExamIdToDelete) {
+                    window.location.href = '?delete_exam=' + currentExamIdToDelete + '&confirm=yes';
+                }
+            }
         }
 
         function openExamDetails(exam, subjects) {
@@ -491,7 +551,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_excel'])) {
             
             document.getElementById('modalViewLink').href = 'exam_results.php?id=' + exam.id;
             document.getElementById('modalExportLink').href = '?export_csv=1&exam_id=' + exam.id;
-            document.getElementById('modalDeleteLink').href = '?delete_exam=' + exam.id;
+            currentExamIdToDelete = exam.id;
             
             document.getElementById('examDetailsModal').style.display = 'flex';
         }

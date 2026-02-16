@@ -53,6 +53,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_students'])) {
                         $skipped_count++;
                         continue;
                     }
+                    
+                    // Check for duplicate admission number
+                    $check_stmt = $conn->prepare("SELECT id FROM students WHERE admission_number = ? LIMIT 1");
+                    $check_stmt->bind_param("s", $admission_number);
+                    $check_stmt->execute();
+                    if ($check_stmt->get_result()->num_rows > 0) {
+                        $errors[] = "Row $row_num: Admission number '$admission_number' already exists";
+                        $skipped_count++;
+                        $check_stmt->close();
+                        continue;
+                    }
+                    $check_stmt->close();
                 } else {
                     // Column 1: Student Name (auto-generate admission number)
                     $full_name = trim($data[0] ?? '');
@@ -62,6 +74,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_students'])) {
                         $skipped_count++;
                         continue;
                     }
+                    
+                    // Check for duplicate student name
+                    $check_stmt = $conn->prepare("SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.full_name = ? AND s.status = 'Active' LIMIT 1");
+                    $check_stmt->bind_param("s", $full_name);
+                    $check_stmt->execute();
+                    if ($check_stmt->get_result()->num_rows > 0) {
+                        $errors[] = "Row $row_num: Student name '$full_name' already exists in the system";
+                        $skipped_count++;
+                        $check_stmt->close();
+                        continue;
+                    }
+                    $check_stmt->close();
                     
                     $admission_number = str_pad($next_admission_number, 3, '0', STR_PAD_LEFT);
                     $next_admission_number++;
@@ -112,45 +136,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['import_students'])) {
 // Handle student addition
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_student'])) {
     $full_name = sanitize($_POST['full_name']);
-    $email = sanitize($_POST['email'] ?? '');
+    $admission_number = sanitize($_POST['admission_number'] ?? '');
     $grade = sanitize($_POST['grade']);
     $stream = sanitize($_POST['stream'] ?? '');
     $parent_name = sanitize($_POST['parent_name'] ?? '');
     $parent_phone = sanitize($_POST['parent_phone'] ?? '');
     $parent_email = sanitize($_POST['parent_email'] ?? '');
     $address = sanitize($_POST['address'] ?? '');
-    $dob = sanitize($_POST['date_of_birth'] ?? null);
-    $admission_number = sanitize($_POST['admission_number'] ?? '');
+    $dob = $_POST['date_of_birth'] ?? null;
     
-    // Auto-generate admission number if not provided
-    if (empty($admission_number)) {
-        $stmt = $conn->prepare("SELECT MAX(CAST(admission_number AS UNSIGNED)) as max_num FROM students WHERE admission_number REGEXP '^[0-9]+$'");
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        $next_num = ($row['max_num'] ?? 0) + 1;
-        $admission_number = str_pad($next_num, 3, '0', STR_PAD_LEFT);
-        $stmt->close();
-    }
-    
-    // Create user account
-    $username = strtolower(str_replace(' ', '', $full_name)) . rand(100, 999);
-    $admission_year = date('Y');
-    $default_password = "student." . $grade . "." . $admission_year;
-    
-    $user_id = registerUser($username, $email ?: $username . '@school.local', $default_password, $full_name, 'Student');
-    
-    if ($user_id) {
-        $student_id = 'STU' . str_pad($user_id, 6, '0', STR_PAD_LEFT);
-        $admission_date = date('Y-m-d');
+    // Check for duplicate student name
+    $check_dup = $conn->prepare("SELECT s.id FROM students s JOIN users u ON s.user_id = u.id WHERE u.full_name = ? AND s.status = 'Active' LIMIT 1");
+    $check_dup->bind_param("s", $full_name);
+    $check_dup->execute();
+    if ($check_dup->get_result()->num_rows > 0) {
+        $error_msg = "Error: Student name '$full_name' already exists in the system. Please use a different name or check existing records.";
+        $check_dup->close();
+    } else {
+        $check_dup->close();
         
-        $stmt = $conn->prepare("INSERT INTO students (user_id, student_id, admission_number, grade, stream, admission_date, admission_year, parent_name, parent_phone, parent_email, address, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("issssssissss", $user_id, $student_id, $admission_number, $grade, $stream, $admission_date, $admission_year, $parent_name, $parent_phone, $parent_email, $address, $dob);
-        $stmt->execute();
-        $stmt->close();
-        
-        header('Location: students.php?success=1');
-        exit();
+        if (empty($admission_number)) {
+            $stmt = $conn->prepare("SELECT MAX(CAST(admission_number AS UNSIGNED)) as max_num FROM students WHERE admission_number REGEXP '^[0-9]+$'");
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            $next_num = ($row['max_num'] ?? 0) + 1;
+            $admission_number = str_pad($next_num, 3, '0', STR_PAD_LEFT);
+            $stmt->close();
+        } else {
+            // Check for duplicate admission number
+            $check_adm = $conn->prepare("SELECT id FROM students WHERE admission_number = ? LIMIT 1");
+            $check_adm->bind_param("s", $admission_number);
+            $check_adm->execute();
+            if ($check_adm->get_result()->num_rows > 0) {
+                $error_msg = "Error: Admission number '$admission_number' already exists. Please use a unique number.";
+                $check_adm->close();
+            } else {
+                $check_adm->close();
+                
+                // Create user account
+                $username = strtolower(str_replace(' ', '', $full_name)) . rand(100, 999);
+                $email = sanitize($_POST['parent_email'] ?? $username . '@school.local');
+                $admission_year = date('Y');
+                $default_password = "student." . $grade . "." . $admission_year;
+                
+                $user_id = registerUser($username, $email, $default_password, $full_name, 'Student');
+                
+                if ($user_id) {
+                    $student_id = 'STU' . str_pad($user_id, 6, '0', STR_PAD_LEFT);
+                    $admission_date = date('Y-m-d');
+                    
+                    $stmt = $conn->prepare("INSERT INTO students (user_id, student_id, admission_number, grade, stream, admission_date, admission_year, parent_name, parent_phone, parent_email, address, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->bind_param("issssssissss", $user_id, $student_id, $admission_number, $grade, $stream, $admission_date, $admission_year, $parent_name, $parent_phone, $parent_email, $address, $dob);
+                    $stmt->execute();
+                    $stmt->close();
+                    
+                    $success_msg = "Student '$full_name' added successfully with admission number: $admission_number";
+                } else {
+                    $error_msg = "Failed to create user account for the student.";
+                }
+            }
+        }
     }
 }
 
