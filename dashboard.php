@@ -5,12 +5,6 @@ require_once 'includes/functions.php';
 
 requireLogin();
 
-// Error handling for Infinity Free hosting
-set_error_handler(function($errno, $errstr, $errfile, $errline) {
-    error_log("[Dashboard Error] $errstr in $errfile:$errline");
-    return true;
-}, E_ALL);
-
 try {
     $user = getCurrentUser();
     if (!$user) {
@@ -55,7 +49,11 @@ if ($role === 'Student') {
             }
             
             // Safe fee percentage
-            $stats['fee_percentage'] = @calculateFeePercentage($student['id']) ?? 0;
+            if (function_exists('calculateFeePercentage')) {
+                $stats['fee_percentage'] = calculateFeePercentage($student['id']) ?? 0;
+            } else {
+                $stats['fee_percentage'] = 0;
+            }
             
             // Safe club count
             $stmt = $conn->prepare("SELECT COUNT(*) as count FROM club_members WHERE student_id = ?");
@@ -78,16 +76,16 @@ if ($role === 'Student') {
 } else {
     try {
         // Safe admin stats
-        $result = @$conn->query("SELECT COUNT(*) as count FROM students WHERE status = 'Active'");
+        $result = $conn->query("SELECT COUNT(*) as count FROM students WHERE status = 'Active'");
         $stats['total_students'] = ($result && $row = $result->fetch_assoc()) ? $row['count'] : 0;
         
-        $result = @$conn->query("SELECT COUNT(*) as count FROM exams");
+        $result = $conn->query("SELECT COUNT(*) as count FROM exams");
         $stats['total_exams'] = ($result && $row = $result->fetch_assoc()) ? $row['count'] : 0;
         
-        $result = @$conn->query("SELECT COUNT(*) as count FROM clubs");
+        $result = $conn->query("SELECT COUNT(*) as count FROM clubs");
         $stats['total_clubs'] = ($result && $row = $result->fetch_assoc()) ? $row['count'] : 0;
         
-        $result = @$conn->query("SELECT COUNT(*) as count FROM notes");
+        $result = $conn->query("SELECT COUNT(*) as count FROM notes");
         $stats['total_notes'] = ($result && $row = $result->fetch_assoc()) ? $row['count'] : 0;
     } catch (Exception $e) {
         error_log("Dashboard: Error loading admin stats - " . $e->getMessage());
@@ -274,7 +272,7 @@ if (isset($_GET['delete_comment'])) {
 
 $news_posts = [];
 try {
-    $result = @$conn->query("SELECT n.*, u.full_name, u.profile_image 
+    $result = $conn->query("SELECT n.*, u.full_name, u.profile_image 
                           FROM news_posts n 
                           JOIN users u ON n.user_id = u.id 
                           ORDER BY n.created_at DESC 

@@ -284,8 +284,11 @@ if ($club_check && $club_check->num_rows > 0) {
                 <div style="padding: 24px;">
                     <div style="display: grid; grid-template-columns: 150px 1fr; gap: 30px; align-items: start;">
                         <div style="text-align: center;">
-                            <?php if (!empty($student['profile_image'])): ?>
-                                <img src="<?php echo htmlspecialchars($student['profile_image']); ?>" alt="Student Photo" style="width: 150px; height: 150px; border-radius: 8px; object-fit: cover; border: 2px solid #ddd;">
+                            <?php if (!empty($student['profile_image']) && $student['profile_image'] !== 'default-avatar.png'): ?>
+                                <img src="uploads/student_photos/<?php echo htmlspecialchars($student['profile_image']); ?>" alt="Student Photo" style="width: 150px; height: 150px; border-radius: 8px; object-fit: cover; border: 2px solid #ddd;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div style="display: none; width: 150px; height: 150px; border-radius: 8px; background: #f0f0f0; align-items: center; justify-content: center; border: 2px solid #ddd;">
+                                    <span style="color: #999;">No Photo</span>
+                                </div>
                             <?php else: ?>
                                 <div style="width: 150px; height: 150px; border-radius: 8px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 2px solid #ddd;">
                                     <span style="color: #999;">No Photo</span>
@@ -535,6 +538,13 @@ if ($club_check && $club_check->num_rows > 0) {
         function viewExamDetails(examId, examName) {
             // Redirect to exam results page for detailed view
             window.location.href = 'exam_results.php?id=' + examId;
+        }
+
+        function toggleEditForm() {
+            const form = document.getElementById('editForm');
+            if (form) {
+                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            }
         }
     </script>
 </body>

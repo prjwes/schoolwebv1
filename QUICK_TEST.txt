@@ -1,0 +1,211 @@
+============================================
+QUICK TEST GUIDE - 5 MINUTES
+============================================
+
+BEFORE STARTING:
+- Upload updated dashboard.php
+- Upload updated student_details.php
+- Ensure /uploads/student_photos/ directory exists
+
+============================================
+TEST 1: DASHBOARD LOADING (1 minute)
+============================================
+
+1. Go to: /dashboard.php
+2. Wait for page to load
+3. Check:
+   ✓ Page loads without 500 error
+   ✓ Stats boxes visible
+   ✓ News section visible
+   ✓ No error messages shown
+
+EXPECTED:
+- Clean dashboard view
+- Stats showing or empty gracefully
+- News feed showing or empty
+
+IF FAILED:
+- Check error logs
+- Run verify_student_edit.php for diagnostics
+
+============================================
+TEST 2: STUDENT EDIT FORM (2 minutes)
+============================================
+
+1. Go to: /students.php
+2. Click on any student
+3. On student details page, click "Edit Information"
+4. Check:
+   ✓ Form appears below header
+   ✓ Photo upload section visible
+   ✓ Parent name field populated
+   ✓ Parent phone field populated
+   ✓ Parent email field populated
+   ✓ Address field populated
+   ✓ Date of birth field visible
+
+EXPECTED:
+- Edit form slides down
+- All fields pre-populated with current data
+- Photo upload area visible at top
+
+IF FAILED:
+- Check JavaScript console for errors
+- Verify toggleEditForm function exists
+- Check student has data in database
+
+============================================
+TEST 3: STUDENT DATA EDITING (2 minutes)
+============================================
+
+1. Keep student details page open from Test 2
+2. Edit form should be visible
+3. Change parent phone to: 0123456789
+4. Change parent name to: Test Parent
+5. Click "Save Changes"
+6. Check:
+   ✓ Success message appears
+   ✓ Form disappears
+   ✓ Page refreshes automatically
+
+EXPECTED:
+- Green success message shows
+- Form closes after save
+- Page shows updated data
+
+IF FAILED:
+- Check error message shown
+- Verify database connection works
+- Check student ID exists in database
+- Review error logs
+
+============================================
+TEST 4: PHOTO UPLOAD (1 minute)
+============================================
+
+1. Go back to student edit form
+2. Click "Choose File"
+3. Select any JPEG/PNG image (< 5MB)
+4. Click "Upload Photo"
+5. Check:
+   ✓ Success message shows
+   ✓ Photo displays in profile area
+   ✓ Directory /uploads/student_photos/ created
+
+EXPECTED:
+- Photo upload succeeds
+- Image displays immediately
+- No errors
+
+IF FAILED:
+- Check directory permissions
+- Ensure /uploads/ directory writable
+- Verify image file < 5MB
+
+============================================
+VERIFICATION SCRIPT
+============================================
+
+To run full system check:
+1. Go to: /verify_student_edit.php
+   (Must be logged in as Admin/HOI)
+
+2. Should display:
+   ✓ Students table structure
+   ✓ All editable columns
+   ✓ MySQL version info
+   ✓ Table constraints
+
+3. Check:
+   ✓ All required columns present
+   ✓ Data types correct
+   ✓ Foreign keys intact
+
+============================================
+ERROR CODES & SOLUTIONS
+============================================
+
+ERROR: 500 Internal Server Error on dashboard
+FIX: Check error logs, ensure all required tables exist
+
+ERROR: Edit form doesn't appear
+FIX: Check JavaScript console, verify toggleEditForm defined
+
+ERROR: Save fails with "Database error"
+FIX: Verify database connection, check student ID exists
+
+ERROR: Photo upload fails
+FIX: Create /uploads/student_photos/ directory
+     Set permissions to 755
+
+ERROR: "Database connection failed"
+FIX: Check database.php credentials
+     Verify database server running
+
+============================================
+FILES TO CHECK
+============================================
+
+Uploaded files:
+✓ /dashboard.php
+✓ /student_details.php
+
+Directories to create:
+✓ /uploads/student_photos/ (auto-created on first use)
+
+Support files (optional):
+? /verify_student_edit.php - Run for diagnostics
+? /FIXES_APPLIED.txt - Reference guide
+? /FIX_VERIFICATION.md - Detailed explanation
+
+============================================
+SUCCESS INDICATORS
+============================================
+
+All tests pass when:
+
+1. Dashboard loads without errors
+2. Edit form appears when button clicked
+3. Existing data shows in form fields
+4. Saving data works
+5. Data persists after refresh
+6. Photo upload works
+7. All error messages are user-friendly
+8. No 500 errors in logs
+9. No JavaScript errors in console
+
+IF ALL GREEN:
+✓ System is working correctly
+✓ Ready for production use
+✓ No further action needed
+
+============================================
+NEXT STEPS
+============================================
+
+After successful tests:
+
+1. Delete verify_student_edit.php (optional)
+2. Monitor error logs for first week
+3. Test with actual student data
+4. Verify all features work as expected
+5. No further action needed
+
+============================================
+FINAL CHECKLIST
+============================================
+
+□ Files uploaded
+□ Directories created
+□ Dashboard test passed
+□ Edit form test passed
+□ Data save test passed
+□ Photo upload test passed
+□ verify_student_edit.php passes
+□ No 500 errors
+□ No console errors
+□ Ready for production
+
+============================================
+Done! System is ready to use.
+============================================
