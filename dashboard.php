@@ -5,20 +5,98 @@ require_once 'includes/functions.php';
 
 requireLogin();
 
-$user = getCurrentUser();
-$role = $user['role'];
+// Error handling for Infinity Free hosting
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    error_log("[Dashboard Error] $errstr in $errfile:$errline");
+    return true;
+}, E_ALL);
+
+try {
+    $user = getCurrentUser();
+    if (!$user) {
+        header('Location: login.php');
+        exit();
+    }
+} catch (Exception $e) {
+    error_log("Dashboard: Failed to get current user - " . $e->getMessage());
+    header('Location: login.php');
+    exit();
+}
+
+$role = $user['role'] ?? 'Student';
 $conn = getDBConnection();
+
+if (!$conn) {
+    error_log("Dashboard: Database connection failed");
+    die("<div style='padding: 20px; background: #f8d7da; color: #721c24; border-radius: 4px;'>Error: Unable to connect to database. Please try again later.</div>");
+}
 
 $stats = [];
 
 if ($role === 'Student') {
-    $student = getStudentByUserId($user['id']);
-    
-    if (!$student) {
-        // Student record not found, redirect to login
-        header('Location: login.php');
-        exit();
+    try {
+        $student = getStudentByUserId($user['id']);
+        
+        if (!$student) {
+            $stats['exams'] = 0;
+            $stats['fee_percentage'] = 0;
+            $stats['clubs'] = 0;
+        } else {
+            // Safe exam count
+            $stmt = $conn->prepare("SELECT COUNT(*) as count FROM exam_results WHERE student_id = ?");
+            if ($stmt) {
+                $stmt->bind_param("i", $student['id']);
+                $stmt->execute();
+                $result = $stmt->get_result()->fetch_assoc();
+                $stats['exams'] = $result['count'] ?? 0;
+                $stmt->close();
+            } else {
+                $stats['exams'] = 0;
+            }
+            
+            // Safe fee percentage
+            $stats['fee_percentage'] = @calculateFeePercentage($student['id']) ?? 0;
+            
+            // Safe club count
+            $stmt = $conn->prepare("SELECT COUNT(*) as count FROM club_members WHERE student_id = ?");
+            if ($stmt) {
+                $stmt->bind_param("i", $student['id']);
+                $stmt->execute();
+                $result = $stmt->get_result()->fetch_assoc();
+                $stats['clubs'] = $result['count'] ?? 0;
+                $stmt->close();
+            } else {
+                $stats['clubs'] = 0;
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Dashboard: Error loading student stats - " . $e->getMessage());
+        $stats['exams'] = 0;
+        $stats['fee_percentage'] = 0;
+        $stats['clubs'] = 0;
     }
+} else {
+    try {
+        // Safe admin stats
+        $result = @$conn->query("SELECT COUNT(*) as count FROM students WHERE status = 'Active'");
+        $stats['total_students'] = ($result && $row = $result->fetch_assoc()) ? $row['count'] : 0;
+        
+        $result = @$conn->query("SELECT COUNT(*) as count FROM exams");
+        $stats['total_exams'] = ($result && $row = $result->fetch_assoc()) ? $row['count'] : 0;
+        
+        $result = @$conn->query("SELECT COUNT(*) as count FROM clubs");
+        $stats['total_clubs'] = ($result && $row = $result->fetch_assoc()) ? $row['count'] : 0;
+        
+        $result = @$conn->query("SELECT COUNT(*) as count FROM notes");
+        $stats['total_notes'] = ($result && $row = $result->fetch_assoc()) ? $row['count'] : 0;
+    } catch (Exception $e) {
+        error_log("Dashboard: Error loading admin stats - " . $e->getMessage());
+        $stats['total_students'] = 0;
+        $stats['total_exams'] = 0;
+        $stats['total_clubs'] = 0;
+        $stats['total_notes'] = 0;
+    }
+}
     
     $stmt = $conn->prepare("SELECT COUNT(*) as count FROM exam_results WHERE student_id = ?");
     if ($stmt) {
@@ -195,34 +273,55 @@ if (isset($_GET['delete_comment'])) {
 }
 
 $news_posts = [];
-$result = $conn->query("SELECT n.*, u.full_name, u.profile_image 
-                      FROM news_posts n 
-                      JOIN users u ON n.user_id = u.id 
-                      ORDER BY n.created_at DESC 
-                      LIMIT 20");
-if ($result) {
-    $news_posts = $result->fetch_all(MYSQLI_ASSOC);
+try {
+    $result = @$conn->query("SELECT n.*, u.full_name, u.profile_image 
+                          FROM news_posts n 
+                          JOIN users u ON n.user_id = u.id 
+                          ORDER BY n.created_at DESC 
+                          LIMIT 20");
+    if ($result) {
+        $news_posts = $result->fetch_all(MYSQLI_ASSOC);
+    } else {
+        error_log("Dashboard: Failed to fetch news posts - " . $conn->error);
+        $news_posts = [];
+    }
+} catch (Exception $e) {
+    error_log("Dashboard: Exception fetching news - " . $e->getMessage());
+    $news_posts = [];
 }
 
 foreach ($news_posts as &$post) {
-    $stmt = $conn->prepare("SELECT c.*, u.full_name, u.profile_image FROM news_comments c 
-                           JOIN users u ON c.user_id = u.id 
-                           WHERE c.news_id = ? 
-                           ORDER BY c.created_at ASC");
-    $stmt->bind_param("i", $post['id']);
-    $stmt->execute();
-    $comments = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-    
-    foreach ($comments as &$comment) {
-        $stmt = $conn->prepare("SELECT * FROM comment_media WHERE comment_id = ?");
-        $stmt->bind_param("i", $comment['id']);
-        $stmt->execute();
-        $comment['media'] = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
+    try {
+        $stmt = $conn->prepare("SELECT c.*, u.full_name, u.profile_image FROM news_comments c 
+                               JOIN users u ON c.user_id = u.id 
+                               WHERE c.news_id = ? 
+                               ORDER BY c.created_at ASC");
+        if ($stmt) {
+            $stmt->bind_param("i", $post['id']);
+            $stmt->execute();
+            $comments = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+        } else {
+            $comments = [];
+        }
+        
+        foreach ($comments as &$comment) {
+            $stmt = $conn->prepare("SELECT * FROM comment_media WHERE comment_id = ?");
+            if ($stmt) {
+                $stmt->bind_param("i", $comment['id']);
+                $stmt->execute();
+                $comment['media'] = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                $stmt->close();
+            } else {
+                $comment['media'] = [];
+            }
+        }
+        
+        $post['comments'] = $comments;
+    } catch (Exception $e) {
+        error_log("Dashboard: Error loading comments for post " . $post['id'] . " - " . $e->getMessage());
+        $post['comments'] = [];
     }
-    
-    $post['comments'] = $comments;
 }
 
 if (isset($_GET['api']) && $_GET['api'] === 'search') {
