@@ -170,7 +170,7 @@ if ($exam_stmt) {
     $exam_stmt->close();
     
     // For each exam, get all subject results
-    foreach ($exam_list as $exam) {
+    foreach ($exam_list as &$exam) {
         $exam_id = $exam['id'];
         $subjects_query = "SELECT es.subject, er.marks_obtained, er.rubric
                           FROM exam_results er
@@ -190,6 +190,7 @@ if ($exam_stmt) {
         
         $exams_data[] = $exam;
     }
+    unset($exam);
 }
 
 $exam_results = $exams_data;
@@ -645,13 +646,6 @@ if ($club_check && $club_check->num_rows > 0) {
         function viewExamDetails(examId, examName) {
             // Redirect to exam results page for detailed view
             window.location.href = 'exam_results.php?id=' + examId;
-        }
-
-        function toggleEditForm() {
-            const form = document.getElementById('editForm');
-            if (form) {
-                form.style.display = form.style.display === 'none' ? 'block' : 'none';
-            }
         }
     </script>
 </body>

@@ -95,36 +95,6 @@ if ($role === 'Student') {
         $stats['total_notes'] = 0;
     }
 }
-    
-    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM exam_results WHERE student_id = ?");
-    if ($stmt) {
-        $stmt->bind_param("i", $student['id']);
-        $stmt->execute();
-        $result = $stmt->get_result()->fetch_assoc();
-        $stats['exams'] = $result['count'] ?? 0;
-        $stmt->close();
-    } else {
-        $stats['exams'] = 0;
-    }
-    
-    $stats['fee_percentage'] = calculateFeePercentage($student['id']);
-    
-    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM club_members WHERE student_id = ?");
-    if ($stmt) {
-        $stmt->bind_param("i", $student['id']);
-        $stmt->execute();
-        $result = $stmt->get_result()->fetch_assoc();
-        $stats['clubs'] = $result['count'] ?? 0;
-        $stmt->close();
-    } else {
-        $stats['clubs'] = 0;
-    }
-} else {
-    $stats['total_students'] = $conn->query("SELECT COUNT(*) as count FROM students WHERE status = 'Active'")->fetch_assoc()['count'] ?? 0;
-    $stats['total_exams'] = $conn->query("SELECT COUNT(*) as count FROM exams")->fetch_assoc()['count'] ?? 0;
-    $stats['total_clubs'] = $conn->query("SELECT COUNT(*) as count FROM clubs")->fetch_assoc()['count'] ?? 0;
-    $stats['total_notes'] = $conn->query("SELECT COUNT(*) as count FROM notes")->fetch_assoc()['count'] ?? 0;
-}
 
 $search_query = sanitize($_GET['search'] ?? '');
 $search_results = [];
