@@ -36,8 +36,8 @@ if ($role === 'Student') {
             $stats['fee_percentage'] = 0;
             $stats['clubs'] = 0;
         } else {
-            // Safe exam count
-            $stmt = $conn->prepare("SELECT COUNT(*) as count FROM exam_results WHERE student_id = ?");
+            // Safe exam count - count distinct exams, not results
+            $stmt = $conn->prepare("SELECT COUNT(DISTINCT exam_id) as count FROM exam_results WHERE student_id = ?");
             if ($stmt) {
                 $stmt->bind_param("i", $student['id']);
                 $stmt->execute();

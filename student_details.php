@@ -105,22 +105,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_photo'])) {
 
 // Handle form submission for editing
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_student'])) {
+    $full_name = sanitize($_POST['full_name'] ?? '');
+    $admission_number = sanitize($_POST['admission_number'] ?? '');
+    $grade = sanitize($_POST['grade'] ?? '');
+    $stream = sanitize($_POST['stream'] ?? '');
+    $email = sanitize($_POST['email'] ?? '');
+    $date_of_birth = isset($_POST['date_of_birth']) && !empty($_POST['date_of_birth']) ? $_POST['date_of_birth'] : NULL;
     $parent_name = sanitize($_POST['parent_name'] ?? '');
     $parent_phone = sanitize($_POST['parent_phone'] ?? '');
     $parent_email = sanitize($_POST['parent_email'] ?? '');
     $address = sanitize($_POST['address'] ?? '');
-    $date_of_birth = isset($_POST['date_of_birth']) && !empty($_POST['date_of_birth']) ? $_POST['date_of_birth'] : NULL;
     
-    // Update student information
-    $update_query = "UPDATE students SET parent_name = ?, parent_phone = ?, parent_email = ?, address = ?, date_of_birth = ? WHERE id = ?";
+    // Update student information in students table
+    $update_query = "UPDATE students SET admission_number = ?, grade = ?, stream = ?, date_of_birth = ?, parent_name = ?, parent_phone = ?, parent_email = ?, address = ? WHERE id = ?";
     $update_stmt = $conn->prepare($update_query);
     
     if (!$update_stmt) {
         $error_msg = "Database error: " . $conn->error;
     } else {
-        $update_stmt->bind_param("sssssi", $parent_name, $parent_phone, $parent_email, $address, $date_of_birth, $student_id);
+        $update_stmt->bind_param("ssssssssi", $admission_number, $grade, $stream, $date_of_birth, $parent_name, $parent_phone, $parent_email, $address, $student_id);
         
         if ($update_stmt->execute()) {
+            // Update user information (name and email)
+            $user_update = "UPDATE users SET full_name = ?, email = ? WHERE id = ?";
+            $user_stmt = $conn->prepare($user_update);
+            
+            if ($user_stmt) {
+                $user_stmt->bind_param("ssi", $full_name, $email, $student['user_id']);
+                $user_stmt->execute();
+                $user_stmt->close();
+            }
+            
             // Refresh student data
             $stmt = $conn->prepare($query);
             $stmt->bind_param("i", $student_id);
@@ -136,10 +151,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_student'])) {
     }
 }
 
-// Get exam results
+// Get exam results with subjects and rubrics
 $exam_results = [];
-$exam_query = "SELECT er.id, er.exam_id, er.marks_obtained, 
-                      e.exam_name, e.exam_type, e.total_marks, e.exam_date
+$exams_data = [];
+
+// First get all exams the student took
+$exam_query = "SELECT DISTINCT e.id, e.exam_name, e.exam_type, e.total_marks, e.exam_date
                FROM exam_results er 
                JOIN exams e ON er.exam_id = e.id 
                WHERE er.student_id = ? 
@@ -149,9 +166,33 @@ $exam_stmt = $conn->prepare($exam_query);
 if ($exam_stmt) {
     $exam_stmt->bind_param("i", $student_id);
     $exam_stmt->execute();
-    $exam_results = $exam_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $exam_list = $exam_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $exam_stmt->close();
+    
+    // For each exam, get all subject results
+    foreach ($exam_list as $exam) {
+        $exam_id = $exam['id'];
+        $subjects_query = "SELECT es.subject, er.marks_obtained, er.rubric
+                          FROM exam_results er
+                          JOIN exam_subjects es ON er.exam_id = es.exam_id
+                          WHERE er.exam_id = ? AND er.student_id = ?
+                          ORDER BY es.subject ASC";
+        
+        $subjects_stmt = $conn->prepare($subjects_query);
+        if ($subjects_stmt) {
+            $subjects_stmt->bind_param("ii", $exam_id, $student_id);
+            $subjects_stmt->execute();
+            $exam['subjects'] = $subjects_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $subjects_stmt->close();
+        } else {
+            $exam['subjects'] = [];
+        }
+        
+        $exams_data[] = $exam;
+    }
 }
+
+$exam_results = $exams_data;
 
 // Get fee information - safely handle results
 $fee_percentage = 0;
@@ -246,12 +287,64 @@ if ($club_check && $club_check->num_rows > 0) {
 
                     <!-- Edit Information Form -->
                     <form method="POST" enctype="multipart/form-data">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <h4 style="margin-top: 0; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">Student Information</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                            <div class="form-group">
+                                <label for="full_name">Full Name *</label>
+                                <input type="text" id="full_name" name="full_name" value="<?php echo htmlspecialchars($student['full_name']); ?>" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="admission_number">Admission Number *</label>
+                                <input type="text" id="admission_number" name="admission_number" value="<?php echo isset($student['admission_number']) ? htmlspecialchars($student['admission_number']) : ''; ?>" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="grade">Grade *</label>
+                                <select id="grade" name="grade" required>
+                                    <option value="">Select Grade</option>
+                                    <optgroup label="Lower Class Primary (Grade 1-3)">
+                                        <option value="1" <?php echo $student['grade'] === '1' ? 'selected' : ''; ?>>Grade 1</option>
+                                        <option value="2" <?php echo $student['grade'] === '2' ? 'selected' : ''; ?>>Grade 2</option>
+                                        <option value="3" <?php echo $student['grade'] === '3' ? 'selected' : ''; ?>>Grade 3</option>
+                                    </optgroup>
+                                    <optgroup label="Upper Class Primary (Grade 4-6)">
+                                        <option value="4" <?php echo $student['grade'] === '4' ? 'selected' : ''; ?>>Grade 4</option>
+                                        <option value="5" <?php echo $student['grade'] === '5' ? 'selected' : ''; ?>>Grade 5</option>
+                                        <option value="6" <?php echo $student['grade'] === '6' ? 'selected' : ''; ?>>Grade 6</option>
+                                    </optgroup>
+                                    <optgroup label="Junior School (Grade 7-9)">
+                                        <option value="7" <?php echo $student['grade'] === '7' ? 'selected' : ''; ?>>Grade 7</option>
+                                        <option value="8" <?php echo $student['grade'] === '8' ? 'selected' : ''; ?>>Grade 8</option>
+                                        <option value="9" <?php echo $student['grade'] === '9' ? 'selected' : ''; ?>>Grade 9</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="stream">Stream</label>
+                                <select id="stream" name="stream">
+                                    <option value="">Select Stream</option>
+                                    <option value="A" <?php echo isset($student['stream']) && $student['stream'] === 'A' ? 'selected' : ''; ?>>Stream A</option>
+                                    <option value="B" <?php echo isset($student['stream']) && $student['stream'] === 'B' ? 'selected' : ''; ?>>Stream B</option>
+                                    <option value="C" <?php echo isset($student['stream']) && $student['stream'] === 'C' ? 'selected' : ''; ?>>Stream C</option>
+                                    <option value="D" <?php echo isset($student['stream']) && $student['stream'] === 'D' ? 'selected' : ''; ?>>Stream D</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($student['email']); ?>">
+                            </div>
+
                             <div class="form-group">
                                 <label for="date_of_birth">Date of Birth</label>
                                 <input type="date" id="date_of_birth" name="date_of_birth" value="<?php echo isset($student['date_of_birth']) && $student['date_of_birth'] ? $student['date_of_birth'] : ''; ?>">
                             </div>
+                        </div>
 
+                        <h4 style="margin-top: 24px; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">Parent/Guardian Information</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                             <div class="form-group">
                                 <label for="parent_name">Parent/Guardian Name *</label>
                                 <input type="text" id="parent_name" name="parent_name" value="<?php echo isset($student['parent_name']) ? htmlspecialchars($student['parent_name']) : ''; ?>" required>
@@ -363,36 +456,50 @@ if ($club_check && $club_check->num_rows > 0) {
                 </div>
                 <div id="examResultsContent">
                     <div class="table-responsive">
-                        <table>
+                        <table style="width: 100%; border-collapse: collapse;">
                             <thead>
-                                <tr>
-                                    <th>Exam Name</th>
-                                    <th>Exam Type</th>
-                                    <th>Date</th>
-                                    <th>Marks Obtained</th>
-                                    <th>Total Marks</th>
-                                    <th>Percentage</th>
-                                    <th>Action</th>
+                                <tr style="background-color: var(--bg-secondary);">
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--border-color);">Exam Name</th>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--border-color);">Type</th>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--border-color);">Date</th>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--border-color);">Subject</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--border-color);">Marks</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--border-color);">Rubric</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($exam_results)): ?>
                                     <tr>
-                                        <td colspan="7" style="text-align: center; padding: 20px;">No exam results yet</td>
+                                        <td colspan="6" style="text-align: center; padding: 20px; border: 1px solid var(--border-color);">No exam results yet</td>
                                     </tr>
                                 <?php else: ?>
-                                    <?php foreach ($exam_results as $result): 
-                                        $percentage = ($result['marks_obtained'] / $result['total_marks']) * 100;
+                                    <?php foreach ($exam_results as $exam): 
+                                        $row_count = max(1, count($exam['subjects']));
                                     ?>
-                                        <tr>
-                                            <td><strong><?php echo htmlspecialchars($result['exam_name']); ?></strong></td>
-                                            <td><?php echo htmlspecialchars($result['exam_type']); ?></td>
-                                            <td><?php echo date('M d, Y', strtotime($result['exam_date'])); ?></td>
-                                            <td><?php echo number_format($result['marks_obtained'], 2); ?></td>
-                                            <td><?php echo $result['total_marks']; ?></td>
-                                            <td><strong><?php echo round($percentage, 2) . '%'; ?></strong></td>
-                                            <td><button class="btn btn-sm" onclick="viewExamDetails(<?php echo $result['id']; ?>, '<?php echo htmlspecialchars($result['exam_name']); ?>')">View Details</button></td>
-                                        </tr>
+                                        <?php foreach ($exam['subjects'] as $key => $subject): ?>
+                                            <tr style="border: 1px solid var(--border-color);">
+                                                <?php if ($key === 0): ?>
+                                                    <td style="padding: 12px; border: 1px solid var(--border-color); font-weight: bold; background-color: var(--bg-secondary);" rowspan="<?php echo $row_count; ?>">
+                                                        <?php echo htmlspecialchars($exam['exam_name']); ?>
+                                                    </td>
+                                                    <td style="padding: 12px; border: 1px solid var(--border-color); background-color: var(--bg-secondary);" rowspan="<?php echo $row_count; ?>">
+                                                        <?php echo htmlspecialchars($exam['exam_type']); ?>
+                                                    </td>
+                                                    <td style="padding: 12px; border: 1px solid var(--border-color); background-color: var(--bg-secondary);" rowspan="<?php echo $row_count; ?>">
+                                                        <?php echo date('M d, Y', strtotime($exam['exam_date'])); ?>
+                                                    </td>
+                                                <?php endif; ?>
+                                                <td style="padding: 12px; border: 1px solid var(--border-color);">
+                                                    <?php echo htmlspecialchars($subject['subject']); ?>
+                                                </td>
+                                                <td style="padding: 12px; border: 1px solid var(--border-color); text-align: center;">
+                                                    <strong><?php echo number_format($subject['marks_obtained'], 2); ?></strong>
+                                                </td>
+                                                <td style="padding: 12px; border: 1px solid var(--border-color); text-align: center;">
+                                                    <?php echo htmlspecialchars($subject['rubric'] ?? '-'); ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </tbody>
