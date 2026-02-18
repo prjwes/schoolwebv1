@@ -596,4 +596,32 @@ function convertValueToRubric($value) {
     ];
     return $rubric_map[$value] ?? 'N/A';
 }
+
+// Get current logged-in user
+function getCurrentUser() {
+    if (!isset($_SESSION['user_id'])) {
+        return null;
+    }
+    
+    $conn = getDBConnection();
+    if (!$conn) {
+        return null;
+    }
+    
+    $stmt = $conn->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+    if (!$stmt) {
+        return null;
+    }
+    
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return null;
+    }
+    
+    $user = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    
+    return $user;
+}
 ?>
