@@ -1,0 +1,263 @@
+COMPLETE DATABASE STRUCTURE & RELATIONSHIPS
+============================================
+
+CORE SYSTEM:
+============
+
+users (ID: id, username, email, password, full_name, role)
+    ↓ 1:M
+students (ID: id, user_id, admission_number, grade, parent info)
+    ↓ 1:M
+exam_results (exam_id, student_id, subject, marks, rubric)
+
+ACADEMIC SYSTEM:
+=================
+
+exams (ID: id, exam_name, type, grade, total_marks, exam_date)
+    ↓ 1:M
+exam_subjects (exam_id, subject)
+    
+exam_results (links students to exams)
+    → students (student_id)
+    → exams (exam_id)
+    → exam_subjects (exam_id)
+
+FEE MANAGEMENT:
+================
+
+fee_types (ID: id, fee_name, amount, grade)
+
+student_fees (ID: id, student_id, fee_type_id, amount_due, amount_paid, status)
+    → students (student_id)
+    → fee_types (fee_type_id)
+
+fee_payments (ID: id, student_id, fee_type_id, amount, date, method)
+    → students (student_id)
+    → fee_types (fee_type_id)
+
+CLUBS & ACTIVITIES:
+====================
+
+clubs (ID: id, club_name, patron, secretary, meeting details)
+    → users (club_patron)
+    → users (club_secretary)
+
+club_members (ID: id, club_id, student_id, role, joined_date)
+    → clubs (club_id)
+    → students (student_id)
+
+NEWS & FEED:
+=============
+
+news_posts (ID: id, user_id, content, media)
+    → users (user_id)
+
+news_comments (ID: id, news_id, user_id, comment)
+    → news_posts (news_id)
+    → users (user_id)
+
+comment_media (ID: id, comment_id, media_url)
+    → news_comments (comment_id)
+
+TIMETABLE SYSTEM:
+==================
+
+timetable_sessions (ID: id, session_name, start_time, end_time, break_type)
+
+lesson_hours (subject, grade, hours_per_week)
+
+timetable_teachers (ID: id, teacher_name, grade, subject)
+
+timetables (ID: id, timetable_name, school_type, timetable_data)
+    → users (created_by)
+
+TEACHING ASSIGNMENTS:
+======================
+
+teacher_grades (ID: id, teacher_id, grade)
+    → users (teacher_id)
+
+STUDY MATERIALS:
+=================
+
+notes (ID: id, title, subject, grade, file_path, uploaded_by, downloads)
+    → users (uploaded_by)
+
+ROLE STATUS:
+=============
+
+role_status (role, is_filled, filled_by)
+    → users (filled_by)
+
+GENERATED REPORTS:
+===================
+
+generated_reports (academic_year, term, grade, report_data, file_path)
+    → users (generated_by)
+
+COMPLETE TABLE COUNT: 20+ TABLES
+=================================
+
+CORE TABLES: 3
+- users
+- role_status
+- students
+
+ACADEMIC TABLES: 5
+- exams
+- exam_results
+- exam_subjects
+- generated_reports
+- lesson_hours
+
+TIMETABLE TABLES: 5
+- timetable_sessions
+- timetable_teachers
+- timetables
+- teacher_grades
+- lesson_hours (shared)
+
+NEWS/SOCIAL TABLES: 3
+- news_posts
+- news_comments
+- comment_media
+
+FEE TABLES: 3
+- fee_types
+- student_fees
+- fee_payments
+
+CLUBS TABLES: 2
+- clubs
+- club_members
+
+MATERIALS TABLE: 1
+- notes
+
+KEY INDEXES CREATED:
+====================
+
+Performance Indexes:
+- users(role)
+- students(grade)
+- students(student_id)
+- students(status)
+- exams(grade)
+- exams(exam_date)
+- exam_results(student_id)
+- exam_results(exam_id)
+- exam_subjects(exam_id)
+- student_fees(student_id)
+- student_fees(status)
+- club_members(student_id)
+- club_members(club_id)
+- notes(grade)
+- notes(subject)
+
+Foreign Key Constraints:
+- All student references cascade on delete
+- All exam references cascade on delete
+- All user references set null on delete
+- All club references cascade on delete
+
+CASCADE BEHAVIORS:
+==================
+
+When a STUDENT is deleted:
+✓ All exam results deleted
+✓ All student_fees deleted
+✓ All fee_payments deleted
+✓ All club_members deleted
+
+When an EXAM is deleted:
+✓ All exam_results deleted
+✓ All exam_subjects deleted
+
+When a USER is deleted:
+✓ Student record orphaned (set user_id=NULL)
+✓ News posts orphaned
+✓ Uploaded notes orphaned
+
+When a CLUB is deleted:
+✓ All club_members deleted
+
+DATA INTEGRITY:
+================
+
+Unique Constraints:
+- users(username)
+- users(email)
+- students(student_id)
+- students(user_id)
+- exam_subjects(exam_id, subject)
+- exam_results(exam_id, student_id, subject)
+- club_members(club_id, student_id)
+- fee_payments(receipt_number)
+
+NOT NULL Constraints:
+- All ID fields
+- All foreign keys (except filled_by, created_by, upload_by)
+- All required fields (names, amounts, etc.)
+
+DEFAULT VALUES:
+- status fields: defaults to 'pending'
+- created_at/updated_at: auto-timestamps
+- boolean fields: FALSE/TRUE defaults
+- indexes: auto-maintained
+
+EXAMPLE DATA FLOWS:
+====================
+
+Scenario 1: Student View Exam Results
+1. student_id = 5
+2. Query: exam_results WHERE student_id = 5
+3. Join with exams to get exam_name, type, date
+4. For each exam_id, query exam_subjects
+5. Display: Exam Name | Type | Date | Subject | Marks | Rubric
+
+Scenario 2: Calculate Student Fee Payment
+1. student_id = 5
+2. Query: student_fees WHERE student_id = 5
+3. SUM(amount_due) and SUM(amount_paid)
+4. Percentage = (amount_paid / amount_due) * 100
+
+Scenario 3: Student Joins Club
+1. student_id = 5, club_id = 2
+2. INSERT into club_members: (club_id=2, student_id=5, role='member')
+3. Query news_posts WHERE user_id in (club members)
+4. Display club-related posts
+
+MIGRATION STEPS:
+=================
+
+Step 1: Create users table
+Step 2: Create students table (references users)
+Step 3: Create exams table
+Step 4: Create exam_subjects table (references exams)
+Step 5: Create exam_results table (references exams, students)
+Step 6: Create fee_types, student_fees, fee_payments
+Step 7: Create clubs, club_members
+Step 8: Create news, comments, media
+Step 9: Create timetable tables
+Step 10: Create other support tables
+
+ORDER IS IMPORTANT: Parent tables must be created before child tables!
+
+The schema.sql file handles this automatically - all tables are created
+in the correct dependency order.
+
+STORAGE REQUIREMENTS:
+======================
+
+Per 1000 Students:
+- students table: ~200 KB
+- exam_results (10 exams, 9 subjects): ~900 KB
+- student_fees: ~100 KB
+- club_members: ~50 KB
+- News posts (1000/month): ~500 KB
+Total: ~1.7 MB per 1000 students
+
+Estimated for 5000 students: ~8.5 MB
+With backups: ~25 MB
+
+All easily handled by any hosting plan!

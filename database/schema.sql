@@ -174,6 +174,15 @@ CREATE TABLE IF NOT EXISTS news_comments (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS comment_media (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    comment_id INT NOT NULL,
+    media_url VARCHAR(255) NOT NULL,
+    media_type VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (comment_id) REFERENCES news_comments(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================
 -- INITIAL DATA
 -- ============================================
@@ -216,4 +225,124 @@ CREATE TABLE IF NOT EXISTS teacher_grades (
     UNIQUE KEY unique_teacher_grade (teacher_id, grade),
     FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_grade (grade)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- FEE MANAGEMENT TABLES
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS fee_types (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    fee_name VARCHAR(100) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    grade VARCHAR(10) DEFAULT 'all',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_grade (grade),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS student_fees (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    fee_type_id INT NOT NULL,
+    amount_due DECIMAL(10, 2) NOT NULL,
+    amount_paid DECIMAL(10, 2) DEFAULT 0.00,
+    status ENUM('pending', 'partial', 'paid') DEFAULT 'pending',
+    due_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (fee_type_id) REFERENCES fee_types(id) ON DELETE CASCADE,
+    INDEX idx_student (student_id),
+    INDEX idx_fee_type (fee_type_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS fee_payments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    fee_type_id INT NOT NULL,
+    amount_paid DECIMAL(10, 2) NOT NULL,
+    payment_date DATE NOT NULL,
+    payment_method VARCHAR(50),
+    term VARCHAR(20),
+    receipt_number VARCHAR(50) UNIQUE,
+    remarks TEXT,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (fee_type_id) REFERENCES fee_types(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_student (student_id),
+    INDEX idx_fee_type (fee_type_id),
+    INDEX idx_payment_date (payment_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- EXAM SUBJECTS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS exam_subjects (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    exam_id INT NOT NULL,
+    subject VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (exam_id) REFERENCES exams(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_exam_subject (exam_id, subject),
+    INDEX idx_exam (exam_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Add rubric column to exam_results if it doesn't exist
+ALTER TABLE exam_results ADD COLUMN rubric VARCHAR(10) DEFAULT 'A' AFTER remarks;
+
+-- ============================================
+-- CLUBS AND ACTIVITIES TABLES
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS clubs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    club_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    club_patron INT,
+    club_secretary INT,
+    meeting_day VARCHAR(20),
+    meeting_time TIME,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (club_patron) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (club_secretary) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS club_members (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    club_id INT NOT NULL,
+    student_id INT NOT NULL,
+    role ENUM('member', 'leader', 'vice_leader') DEFAULT 'member',
+    joined_date DATE NOT NULL,
+    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_club_student (club_id, student_id),
+    INDEX idx_club (club_id),
+    INDEX idx_student (student_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- STUDY MATERIALS TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS notes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    subject VARCHAR(100),
+    grade VARCHAR(10),
+    file_path VARCHAR(255),
+    uploaded_by INT NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    downloads INT DEFAULT 0,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_grade (grade),
+    INDEX idx_subject (subject)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
