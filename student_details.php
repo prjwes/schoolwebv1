@@ -199,17 +199,21 @@ $exam_results = $exams_data;
 $fee_percentage = 0;
 $total_fees = 100000;
 
-// Check if fees table exists first
-$fee_check = $conn->query("SHOW TABLES LIKE 'fees'");
+// Check if student_fees table exists first
+$fee_check = $conn->query("SHOW TABLES LIKE 'student_fees'");
 if ($fee_check && $fee_check->num_rows > 0) {
-    $fee_query = "SELECT SUM(amount_paid) as total_paid FROM fees WHERE student_id = ?";
+    // Calculate total fees expected and paid
+    $fee_query = "SELECT SUM(sf.amount_due) as total_due, SUM(sf.amount_paid) as total_paid 
+                  FROM student_fees sf WHERE sf.student_id = ?";
     $fee_stmt = $conn->prepare($fee_query);
     if ($fee_stmt) {
         $fee_stmt->bind_param("i", $student_id);
         $fee_stmt->execute();
         $fee_result = $fee_stmt->get_result()->fetch_assoc();
-        if ($fee_result && $fee_result['total_paid'] > 0) {
-            $fee_percentage = min(100, round(($fee_result['total_paid'] / $total_fees) * 100));
+        if ($fee_result && $fee_result['total_due'] > 0) {
+            $fee_percentage = min(100, round(($fee_result['total_paid'] / $fee_result['total_due']) * 100));
+        } elseif ($fee_result && $fee_result['total_paid'] > 0) {
+            $fee_percentage = 100;
         }
         $fee_stmt->close();
     }
@@ -253,15 +257,15 @@ if ($club_check && $club_check->num_rows > 0) {
                 <a href="students.php" class="btn btn-secondary">Back to Students</a>
             </div>
 
-            <?php if (isset($success_msg)): ?>
-                <div class="alert alert-success" style="margin-bottom: 20px;">
-                    <?php echo htmlspecialchars($success_msg); ?>
+            <?php if (!empty($success_msg)): ?>
+                <div class="alert alert-success" style="margin-bottom: 20px; padding: 12px; background: #d4edda; border: 1px solid #c3e6cb; color: #155724; border-radius: 4px;">
+                    ✓ <?php echo htmlspecialchars($success_msg); ?>
                 </div>
             <?php endif; ?>
 
-            <?php if (isset($error_msg)): ?>
-                <div class="alert alert-error" style="margin-bottom: 20px;">
-                    <?php echo htmlspecialchars($error_msg); ?>
+            <?php if (!empty($error_msg)): ?>
+                <div class="alert alert-error" style="margin-bottom: 20px; padding: 12px; background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; border-radius: 4px;">
+                    ✗ <?php echo htmlspecialchars($error_msg); ?>
                 </div>
             <?php endif; ?>
 
@@ -287,7 +291,7 @@ if ($club_check && $club_check->num_rows > 0) {
                     </div>
 
                     <!-- Edit Information Form -->
-                    <form method="POST" enctype="multipart/form-data">
+                    <form method="POST">
                         <h4 style="margin-top: 0; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">Student Information</h4>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                             <div class="form-group">

@@ -3,6 +3,39 @@
 -- Creates student_fees table to track fee assignments with 0 paid initially
 -- ============================================
 
+-- Create fee_types table FIRST (referenced by student_fees)
+CREATE TABLE IF NOT EXISTS fee_types (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    fee_name VARCHAR(100) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    grade VARCHAR(10) DEFAULT 'all',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_grade (grade),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create fee_payments table for payment tracking
+CREATE TABLE IF NOT EXISTS fee_payments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    fee_type_id INT NOT NULL,
+    amount_paid DECIMAL(10, 2) NOT NULL,
+    payment_date DATE NOT NULL,
+    payment_method VARCHAR(50),
+    term VARCHAR(20),
+    receipt_number VARCHAR(50) UNIQUE,
+    remarks TEXT,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (fee_type_id) REFERENCES fee_types(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_student (student_id),
+    INDEX idx_fee_type (fee_type_id),
+    INDEX idx_payment_date (payment_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Create student_fees table
 CREATE TABLE IF NOT EXISTS student_fees (
     id INT PRIMARY KEY AUTO_INCREMENT,
